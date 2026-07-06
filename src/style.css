@@ -1,0 +1,460 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+@import "tailwindcss";
+
+
+:root {
+  --font-sans: 'Outfit', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+  
+  --color-bg: #030712; /* Slate-950 */
+  --color-card-bg: rgba(17, 24, 39, 0.75); /* Slate-900 with transparency */
+  --color-border: rgba(55, 65, 81, 0.4); /* Slate-700 translucent */
+  --color-primary: #8b5cf6; /* Violet-500 */
+  --color-secondary: #06b6d4; /* Cyan-500 */
+  --color-text-main: #f3f4f6; /* Gray-100 */
+  --color-text-muted: #9ca3af; /* Gray-400 */
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Three.js Background Canvas */
+#three-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -10;
+  pointer-events: none;
+}
+
+/* Matter.js Debug Canvas (for development purposes, hidden by default) */
+#matter-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0.3;
+  display: none;
+}
+
+/* Floatables Styling */
+.floatable {
+  /* Hardware acceleration for smooth transforms */
+  will-change: transform, left, top, width, height;
+}
+
+/* Active State for Floatables under Physics control */
+.floatable-active {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 50 !important;
+  pointer-events: auto;
+  cursor: grab;
+  /* Disable transition to let JS update position smoothly frame by frame */
+  transition: none !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+}
+
+.floatable-active:active {
+  cursor: grabbing;
+}
+
+/* Standard scroll lock when physics is active */
+body.physics-active {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #030712;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+/* Card utilities */
+.glass-card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(139, 92, 246, 0.4); /* Violet shadow borders */
+  box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.2);
+}
+
+/* Button glow styling */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-glow::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 150%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.5s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.btn-glow:hover::after {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Skill Badge Styles */
+.skill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(31, 41, 55, 0.6);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.skill-badge:hover {
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+/* Custom interactive UI buttons */
+.physics-control-panel {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  gap: 16px;
+  pointer-events: auto;
+}
+
+/* Timeline custom lines */
+.timeline-line {
+  position: absolute;
+  left: 19px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+}
+
+/* Custom Cursor styling and desktop overrides */
+@media (min-width: 768px) {
+  body, a, button, [role="button"], input, select, textarea, .skill-badge, #restore-gravity-btn, #zero-g-toggle {
+    cursor: none !important;
+  }
+  
+  #custom-cursor {
+    transition: width 0.2s, height 0.2s, background-color 0.2s;
+  }
+  
+  #custom-cursor-follower {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+  }
+}
+
+/* Light mode theme overrides */
+body.light-mode {
+  background-color: #f8fafc !important; /* slate-50 */
+  color: #334155 !important; /* slate-700 */
+}
+
+/* Headings and High-emphasis text */
+body.light-mode h1, 
+body.light-mode h2, 
+body.light-mode h3, 
+body.light-mode h4,
+body.light-mode h5,
+body.light-mode h6,
+body.light-mode .text-slate-100,
+body.light-mode .text-slate-200,
+body.light-mode .text-gray-100,
+body.light-mode .text-white {
+  color: #0f172a !important; /* slate-900 */
+}
+
+/* Body copy, descriptions and Medium-emphasis text */
+body.light-mode p,
+body.light-mode li,
+body.light-mode span,
+body.light-mode .text-slate-300,
+body.light-mode .text-slate-400,
+body.light-mode .text-gray-300,
+body.light-mode .text-gray-400 {
+  color: #334155 !important; /* slate-700 */
+}
+
+/* Secondary meta info (dates, locations, etc.) */
+body.light-mode time,
+body.light-mode .text-slate-500,
+body.light-mode .text-gray-500 {
+  color: #64748b !important; /* slate-500 */
+}
+
+/* Interactive links and navigation text */
+body.light-mode a,
+body.light-mode nav a,
+body.light-mode header a {
+  color: #475569 !important; /* slate-600 */
+}
+
+body.light-mode a:hover,
+body.light-mode nav a:hover,
+body.light-mode header a:hover {
+  color: #0f172a !important; /* slate-900 */
+}
+
+/* Accent colors mapping (darker tones for light mode contrast) */
+body.light-mode .text-cyan-400 {
+  color: #0891b2 !important; /* cyan-600 */
+}
+body.light-mode .text-violet-400 {
+  color: #6d28d9 !important; /* violet-700 */
+}
+body.light-mode .text-rose-300,
+body.light-mode .text-rose-400 {
+  color: #b91c1c !important; /* red-700 */
+}
+body.light-mode .bg-rose-950\/20 {
+  background-color: rgba(254, 226, 226, 0.7) !important; /* light red glass */
+}
+body.light-mode .text-rose-300 {
+  color: #991b1b !important;
+}
+
+/* Glass cards light theme properties */
+body.light-mode .glass-card {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(203, 213, 225, 0.7) !important;
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08) !important;
+  color: #334155 !important;
+}
+
+body.light-mode .glass-card:hover {
+  border-color: rgba(109, 40, 217, 0.4) !important;
+  box-shadow: 0 15px 35px -10px rgba(109, 40, 217, 0.12) !important;
+}
+
+body.light-mode header {
+  border-color: rgba(226, 232, 240, 0.8) !important;
+  background-color: rgba(248, 250, 252, 0.8) !important;
+}
+
+body.light-mode .skill-badge {
+  background-color: rgba(241, 245, 249, 0.8) !important;
+  border-color: rgba(203, 213, 225, 0.8) !important;
+  color: #1e293b !important;
+}
+
+body.light-mode .skill-badge:hover {
+  background-color: rgba(109, 40, 217, 0.1) !important;
+  border-color: #6d28d9 !important;
+  color: #6d28d9 !important;
+}
+
+body.light-mode #zero-g-toggle {
+  background-color: rgba(254, 226, 226, 0.8) !important;
+  border-color: rgba(248, 113, 113, 0.5) !important;
+  color: #b91c1c !important;
+}
+
+body.light-mode #zero-g-toggle:hover {
+  background-color: rgba(254, 202, 202, 0.9) !important;
+  border-color: #ef4444 !important;
+}
+
+body.light-mode .timeline-container::before {
+  background: rgba(203, 213, 225, 0.8) !important;
+}
+
+body.light-mode .timeline-progress-line {
+  background: #6d28d9 !important;
+}
+
+body.light-mode .timeline-container .absolute.w-3 {
+  background-color: #6d28d9 !important;
+  border-color: #f8fafc !important;
+}
+
+body.light-mode .bg-slate-900\/60 {
+  background-color: rgba(241, 245, 249, 0.8) !important;
+  border-color: rgba(203, 213, 225, 0.8) !important;
+}
+
+body.light-mode #theme-toggle {
+  color: #475569 !important;
+}
+
+body.light-mode #theme-toggle:hover {
+  color: #0f172a !important;
+}
+
+body.light-mode .border-slate-800\/40,
+body.light-mode .border-slate-700\/60 {
+  border-color: rgba(203, 213, 225, 0.8) !important;
+}
+
+body.light-mode .bg-slate-900\/40 {
+  background-color: rgba(241, 245, 249, 0.4) !important;
+}
+
+body.light-mode .hover\:bg-slate-900\/60:hover {
+  background-color: rgba(241, 245, 249, 0.8) !important;
+}
+
+body.light-mode .bg-violet-950\/15,
+body.light-mode .bg-cyan-950\/15 {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+  border-color: rgba(203, 213, 225, 0.7) !important;
+}
+
+body.light-mode .bg-violet-950\/25,
+body.light-mode .bg-cyan-950\/25,
+body.light-mode .hover\:bg-violet-950\/25:hover,
+body.light-mode .hover\:bg-cyan-950\/25:hover {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(109, 40, 217, 0.4) !important;
+}
+
+/* Colorful light mode extensions */
+body.light-mode .bg-violet-600\/10,
+body.light-mode .bg-cyan-600\/10,
+body.light-mode .bg-rose-600\/10 {
+  background-color: rgba(139, 92, 246, 0.16) !important; /* Brighter violet */
+  filter: blur(80px) !important;
+}
+body.light-mode .bg-cyan-600\/10 {
+  background-color: rgba(6, 182, 212, 0.16) !important; /* Brighter cyan */
+}
+body.light-mode .bg-rose-600\/10 {
+  background-color: rgba(244, 63, 94, 0.16) !important; /* Brighter rose */
+}
+
+/* Card left border accents */
+body.light-mode #experience > div > div:first-child {
+  border-left: 4px solid #0891b2 !important; /* Cyan vertical accent */
+}
+body.light-mode #projects {
+  border-left: 4px solid #6d28d9 !important; /* Violet vertical accent */
+}
+body.light-mode #about > div {
+  border-left: 4px solid #4f46e5 !important; /* Indigo accent */
+}
+body.light-mode #education .timeline-container .glass-card:nth-of-type(1) {
+  border-left: 4px solid #6d28d9 !important; /* Violet */
+}
+body.light-mode #education .timeline-container .glass-card:nth-of-type(2) {
+  border-left: 4px solid #0891b2 !important; /* Cyan */
+}
+body.light-mode #education .timeline-container .glass-card:nth-of-type(3) {
+  border-left: 4px solid #4f46e5 !important; /* Indigo */
+}
+body.light-mode #education .timeline-container .glass-card:nth-of-type(4) {
+  border-left: 4px solid #64748b !important; /* Slate */
+}
+body.light-mode #contact > div {
+  border-left: 4px solid #db2777 !important; /* Pink accent */
+}
+
+/* Skills Cloud Badges in Light Mode */
+body.light-mode .skill-badge.text-amber-500 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  color: #b45309 !important;
+}
+body.light-mode .skill-badge.text-blue-400,
+body.light-mode .skill-badge.text-blue-500 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+  color: #1d4ed8 !important;
+}
+body.light-mode .skill-badge.text-yellow-400 {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+  border-color: rgba(234, 179, 8, 0.4) !important;
+  color: #a16207 !important;
+}
+body.light-mode .skill-badge.text-orange-500,
+body.light-mode .skill-badge.text-orange-600 {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+  border-color: rgba(249, 115, 22, 0.4) !important;
+  color: #c2410c !important;
+}
+body.light-mode .skill-badge.text-cyan-400 {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(6, 182, 212, 0.4) !important;
+  color: #0891b2 !important;
+}
+body.light-mode .skill-badge.text-emerald-400 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #047857 !important;
+}
+body.light-mode .skill-badge.text-sky-400 {
+  background-color: rgba(56, 189, 248, 0.15) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  color: #0369a1 !important;
+}
+body.light-mode .skill-badge.text-purple-400 {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+  border-color: rgba(168, 85, 247, 0.4) !important;
+  color: #7e22ce !important;
+}
+body.light-mode .skill-badge.text-indigo-400 {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+  color: #4338ca !important;
+}
+body.light-mode .skill-badge.text-rose-400 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+  border-color: rgba(244, 63, 94, 0.4) !important;
+  color: #be123c !important;
+}
+body.light-mode .skill-badge.text-teal-400 {
+  background-color: rgba(20, 184, 166, 0.15) !important;
+  border-color: rgba(20, 184, 166, 0.4) !important;
+  color: #0f766e !important;
+}
+body.light-mode .skill-badge.text-slate-300 {
+  background-color: rgba(148, 163, 184, 0.15) !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+  color: #334155 !important;
+}
+
+
+
+
